@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="不规则 Q4-X 单胞 N20/S21 数据库交互式图谱">
+  <title>Q4-X N20/S21 数据图谱</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="stylesheet" href="./styles.css?v=6">
+</head>
+<body>
+  <div class="ambient-grid" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+        <div><strong>Q4-X DATA ATLAS</strong><span>不规则单胞 · 刚度数据库</span></div>
+      </div>
+      <div class="run-state">
+        <span class="pulse" aria-hidden="true"></span>
+        <span id="run-id">正在载入数据快照</span>
+      </div>
+      <div class="top-actions">
+        <button class="button ghost" id="update-guide">更新说明</button>
+        <button class="button primary" id="export-button">导出筛选结果</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="filter-rail" aria-label="数据库筛选器">
+        <div class="rail-heading">
+          <span>样本筛选</span><button id="reset-button" class="text-button">全部重置</button>
+        </div>
+        <section class="customer-query" aria-labelledby="customer-query-title">
+          <div class="query-heading">
+            <div><span class="eyebrow">DIRECT MATCH</span><h2 id="customer-query-title">按四节点坐标查询</h2></div>
+            <span class="query-badge">自动规范化</span>
+          </div>
+          <p>输入实际四节点的 8 个坐标和杆宽比，系统会消除平移、旋转与尺度并定位最接近记录。</p>
+          <div class="node-input-grid" id="node-input-grid">
+            <label><b>P1</b><span><small>x</small><input id="q-x1" type="number" step="any" inputmode="decimal" aria-label="P1 x坐标"></span><span><small>y</small><input id="q-y1" type="number" step="any" inputmode="decimal" aria-label="P1 y坐标"></span></label>
+            <label><b>P2</b><span><small>x</small><input id="q-x2" type="number" step="any" inputmode="decimal" aria-label="P2 x坐标"></span><span><small>y</small><input id="q-y2" type="number" step="any" inputmode="decimal" aria-label="P2 y坐标"></span></label>
+            <label><b>P3</b><span><small>x</small><input id="q-x3" type="number" step="any" inputmode="decimal" aria-label="P3 x坐标"></span><span><small>y</small><input id="q-y3" type="number" step="any" inputmode="decimal" aria-label="P3 y坐标"></span></label>
+            <label><b>P4</b><span><small>x</small><input id="q-x4" type="number" step="any" inputmode="decimal" aria-label="P4 x坐标"></span><span><small>y</small><input id="q-y4" type="number" step="any" inputmode="decimal" aria-label="P4 y坐标"></span></label>
+          </div>
+          <label class="thickness-input"><span>杆宽比 h̄</span><input id="q-h" type="number" step="0.0001" inputmode="decimal" aria-label="查询杆宽比"></label>
+          <button class="button primary query-action" id="match-query"><span>匹配数据库</span><i aria-hidden="true">→</i></button>
+          <div class="query-result" id="query-result" aria-live="polite"><span>输入参数后开始匹配</span></div>
+        </section>
+
+        <fieldset>
+          <legend>采样类型</legend>
+          <div class="segment" id="family-filter">
+            <button class="active" data-value="all">全部</button>
+            <button data-value="core">常规</button>
+            <button data-value="boundary">边界</button>
+          </div>
+        </fieldset>
+
+        <section class="shape-filter" aria-labelledby="shape-filter-title">
+          <div class="filter-label"><span id="shape-filter-title">四节点形状范围</span><button class="text-button" id="reset-shape">恢复</button></div>
+          <div id="geometry-filter-grid" class="shape-slider-grid"></div>
+        </section>
+
+        <div class="filter-block">
+          <div class="filter-label"><span>杆宽比 h̄</span><output id="h-output">—</output></div>
+          <div class="range-stack">
+            <input id="h-min" type="range" step="any" aria-label="最小杆宽比">
+            <input id="h-max" type="range" step="any" aria-label="最大杆宽比">
+          </div>
+        </div>
+
+        <label class="select-label" for="color-metric">散点着色</label>
+        <select id="color-metric">
+          <option value="rho">相对密度 ρ̄</option>
+          <option value="h">杆宽比 h̄</option>
+          <option value="kNorm">刚度范数 ‖Ke‖F</option>
+        </select>
+
+        <div class="rail-status">
+          <span>当前筛选</span>
+          <strong id="filtered-count">—</strong>
+          <small>条可视记录</small>
+        </div>
+        <p class="integrity-note"><span>i</span> 当前页面展示 N20/S21 数据库中的可视化字段。</p>
+      </aside>
+
+      <section class="content">
+        <section class="metric-strip" aria-label="数据库摘要">
+          <article><span>样本总量</span><strong id="metric-count">—</strong><small>完整记录</small></article>
+          <article><span>几何组</span><strong id="metric-geometries">—</strong><small>每组 8 个 h̄</small></article>
+          <article><span>离散精度</span><strong id="metric-fidelity">—</strong><small>N 为 882 × 8</small></article>
+          <article><span>同步状态</span><strong class="status-good">源已连接</strong><small id="metric-status-detail">正在核验</small></article>
+        </section>
+
+        <section class="visual-row">
+          <article class="panel scatter-panel">
+            <div class="panel-heading">
+              <div><span class="eyebrow">GEOMETRY SPACE</span><h1>规范化 Q4 形状分布</h1><button class="text-button inline-help" id="parameter-guide">四节点参数与范围</button></div>
+              <div class="legend"><span id="legend-low">低</span><i></i><span id="legend-high">高</span></div>
+            </div>
+            <div class="canvas-wrap">
+              <canvas id="scatter-canvas" tabindex="0" aria-label="x3 与 y3 的样本分布散点图"></canvas>
+              <div id="scatter-tooltip" class="chart-tooltip" hidden></div>
+            </div>
+            <div class="axis-note"><span>横轴：P3 规范化横坐标 x₃ᶜ</span><span>点选样本以联动右侧几何与刚度矩阵</span><span>纵轴：P3 规范化纵坐标 y₃ᶜ</span></div>
+          </article>
+
+          <article class="panel specimen-panel">
+            <div class="panel-heading compact">
+              <div><span class="eyebrow">SELECTED CELL</span><h2 id="selected-id">—</h2></div>
+              <button class="icon-button" id="open-detail" aria-label="打开样本详情">↗</button>
+            </div>
+            <svg id="geometry-svg" class="geometry-view" viewBox="0 0 360 260" role="img" aria-label="所选 Q4-X 单胞几何"></svg>
+            <div class="specimen-values">
+              <div><span>h̄</span><strong id="selected-h">—</strong></div>
+              <div><span>ρ̄</span><strong id="selected-rho">—</strong></div>
+              <div><span>‖Ke‖F</span><strong id="selected-k">—</strong></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="analysis-row">
+          <article class="panel matrix-panel">
+            <div class="panel-heading compact">
+              <div><span class="eyebrow">STIFFNESS SIGNATURE</span><h2>局部刚度矩阵 Ke</h2></div>
+              <span class="matrix-scale" id="matrix-scale">—</span>
+            </div>
+            <div class="matrix-wrap">
+              <canvas id="matrix-canvas" aria-label="8 乘 8 局部刚度矩阵热图"></canvas>
+              <div id="matrix-tooltip" class="chart-tooltip" hidden></div>
+            </div>
+          </article>
+
+          <article class="panel table-panel">
+            <div class="panel-heading compact table-heading">
+              <div><span class="eyebrow">SAMPLE RECORDS</span><h2>样本索引</h2></div>
+              <label>排序
+                <select id="sort-select">
+                  <option value="id">编号</option>
+                  <option value="h">h̄</option>
+                  <option value="rho">ρ̄</option>
+                  <option value="kNorm">‖Ke‖F</option>
+                </select>
+              </label>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>样本</th><th>采样类型</th><th>h̄</th><th>ρ̄</th><th>‖Ke‖F</th></tr></thead>
+                <tbody id="record-body"></tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <span id="page-label">—</span>
+              <nav class="page-controls" aria-label="样本分页">
+                <button id="prev-page" aria-label="上一页">←</button>
+                <div id="page-numbers" class="page-numbers"></div>
+                <button id="next-page" aria-label="下一页">→</button>
+              </nav>
+              <form id="page-jump-form" class="page-jump"><label for="page-jump-input">跳至</label><input id="page-jump-input" type="number" min="1" step="1" inputmode="numeric" aria-label="输入要跳转的页码"><span>页</span><button id="page-jump-button" type="submit">前往</button></form>
+            </div>
+          </article>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="detail-dialog">
+    <form method="dialog"><button class="dialog-close" aria-label="关闭详情">×</button></form>
+    <span class="eyebrow">RECORD INSPECTOR</span>
+    <h2 id="detail-title">样本详情</h2>
+    <div id="detail-content" class="detail-grid"></div>
+    <div class="dialog-actions"><button id="copy-id" class="button ghost">复制样本编号</button><form method="dialog"><button class="button primary">完成</button></form></div>
+  </dialog>
+
+  <dialog id="parameter-dialog">
+    <form method="dialog"><button class="dialog-close" aria-label="关闭参数说明">×</button></form>
+    <span class="eyebrow">INPUT DEFINITION</span>
+    <h2>四节点参数如何选取</h2>
+    <p class="dialog-copy">原始四节点共有 8 个坐标。程序在内部消去平移、旋转和整体尺度，将 P1 固定为 (0,0)、P2 固定为 (1,0)，因此真正描述单元形状的是 P3=(x₃ᶜ,y₃ᶜ) 与 P4=(x₄ᶜ,y₄ᶜ) 四个变量；杆宽比 h̄ 是第 5 个输入。</p>
+    <p class="dialog-copy" id="sampling-summary">当前图谱采用固定随机种子的扰乱 Sobol 分批采样。</p>
+    <div class="range-table-wrap"><table class="range-table"><thead><tr><th>变量</th><th>常规候选范围</th><th>边界候选范围</th><th>当前实际范围</th></tr></thead><tbody id="parameter-range-body"></tbody></table></div>
+    <p class="guide-note">这些是探索性候选采样范围，不是已经验证的模型适用域。散点图横、纵轴只画 P3 的两个坐标；P4 可在“四节点形状参数”筛选器和样本详情中查看。</p>
+    <form method="dialog"><button class="button primary full">知道了</button></form>
+  </dialog>
+
+  <dialog id="guide-dialog">
+    <form method="dialog"><button class="dialog-close" aria-label="关闭更新说明">×</button></form>
+    <span class="eyebrow">DATA PIPELINE</span>
+    <h2>补充数据后的更新方式</h2>
+    <ol>
+      <li><strong>保持字段合同</strong><span>新增运行继续输出 database_index.csv 与对应 NPZ archive。</span></li>
+      <li><strong>登记新增运行</strong><span>同步入口把新的不可变运行加入来源注册表，并为后续批次配置不冲突的编号前缀。</span></li>
+      <li><strong>校验并同步</strong><span>同步脚本逐项复核 archive 哈希、N20/S21 标记、N 与 Ke 维度，再原子更新展示数据。</span></li>
+      <li><strong>发布同一站点</strong><span>重新发布后，原公开链接不变，筛选器、图表、表格和详情页自动纳入新增记录。</span></li>
+    </ol>
+    <p class="guide-note">网页只承载展示所需字段与 8×8 Ke，不复制约 765 MB 的完整 Ks/N 档案。</p>
+    <form method="dialog"><button class="button primary full">知道了</button></form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js?v=6" defer></script>
+</body>
+</html>
